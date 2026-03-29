@@ -16,9 +16,15 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-DATABASE_URL = os.environ.get(
+_raw_url = os.environ.get(
     "DATABASE_URL", "postgresql+asyncpg://vdv:vdv@localhost:5432/vdv"
 )
+if _raw_url.startswith("postgres://"):
+    DATABASE_URL = _raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif _raw_url.startswith("postgresql://"):
+    DATABASE_URL = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+else:
+    DATABASE_URL = _raw_url
 
 
 def run_migrations_offline() -> None:
