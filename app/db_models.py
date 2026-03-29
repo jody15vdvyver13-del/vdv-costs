@@ -120,6 +120,7 @@ class CostEntry(Base):
     )
     description: Mapped[Optional[str]] = mapped_column(String(500))
     slip_image_url: Mapped[Optional[str]] = mapped_column(String(1000))
+    submitter_phone: Mapped[Optional[str]] = mapped_column(String(50))  # WhatsApp sender e.g. whatsapp:+27...
     status: Mapped[CostEntryStatus] = mapped_column(
         Enum(CostEntryStatus, name="cost_entry_status"),
         default=CostEntryStatus.pending,

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 CONFIDENCE_THRESHOLD = 0.7
 HIGH_VALUE_THRESHOLD = 10_000.0
+THREE_WAY_MATCH_THRESHOLD = 5_000.0
 JOB_REF_RE = re.compile(r"^VDV-JOB-\d{4}-\d{3}$")
 DUPLICATE_WINDOW_HOURS = 24
 
@@ -66,10 +67,12 @@ async def post_to_ledger(
         logger.warning("Job %r not found in DB — skipping DB insert", job_ref)
         return None
 
-    # ── 4. Amount > R10,000 ───────────────────────────────────────────────────
+    # ── 4. Amount checks ──────────────────────────────────────────────────────
     amount = extracted.amount_incl_vat or extracted.amount_excl_vat
     if amount is not None and amount > HIGH_VALUE_THRESHOLD:
         exceptions.append("high_value")
+    if amount is not None and amount > THREE_WAY_MATCH_THRESHOLD:
+        exceptions.append("three_way_match_required")
 
     # ── 5. Supplier not on approved vendor list ───────────────────────────────
     supplier_name = extracted.supplier or ""
@@ -108,6 +111,7 @@ async def post_to_ledger(
         category_code=category_code,
         description=extracted.description,
         slip_image_url=slip.media_url,
+        submitter_phone=slip.sender,
         status=entry_status,
     )
     db.add(entry)

@@ -19,6 +19,7 @@ _EXCEPTION_MESSAGES: dict[str, str] = {
     "high_value": "amount exceeds R10,000 approval threshold",
     "unapproved_supplier": "supplier is not on the approved vendor list",
     "duplicate_slip": "possible duplicate slip detected within 24 hours",
+    "three_way_match_required": "three-way match required (PO + delivery note + invoice)",
 }
 
 
@@ -86,3 +87,12 @@ def build_error_message(job_reference: str, reason: str) -> str:
     """Build a message for cases where no cost entry could be created."""
     friendly = _EXCEPTION_MESSAGES.get(reason, reason)
     return f"\u274C {job_reference or 'Unknown job'}: slip rejected — {friendly}"
+
+
+def build_rejection_notice(entry_id: int, job_reference: str, reason: str) -> str:
+    """Build the rejection notification sent back to the original slip submitter."""
+    return (
+        f"\u274C Entry #{entry_id} for {job_reference} was rejected by the CFO"
+        + (f": {reason}" if reason else "")
+        + ". Please resubmit with corrections."
+    )

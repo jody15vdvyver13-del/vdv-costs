@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from app.cfo_alerts import send_cfo_alert
 from app.classifier import classify_slip
 from app.database import AsyncSessionLocal
 from app.ledger import post_to_ledger
@@ -47,7 +48,12 @@ async def process_slip(slip: IncomingSlip) -> None:
     async with AsyncSessionLocal() as db:
         result = await post_to_ledger(db, slip, extracted, category_code)
 
-    # ── 4. Send WhatsApp confirmation ─────────────────────────────────────────
+    # ── 4. Send CFO alert if exceptions raised ────────────────────────────────
+    if result is not None and result.exception_types:
+        job_ref = extracted.job_reference or slip.job_reference
+        await send_cfo_alert(result.cost_entry, job_ref, result.exception_types)
+
+    # ── 5. Send WhatsApp confirmation ─────────────────────────────────────────
     if result is None:
         # Job not found or job reference invalid — no DB entry created
         reason = "invalid_job_reference" if not extracted.job_reference else "job_not_found"
