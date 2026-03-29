@@ -18,18 +18,18 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.execute(
-        "CREATE TYPE job_status AS ENUM ('active', 'completed', 'cancelled')"
+        "DO $$ BEGIN CREATE TYPE job_status AS ENUM ('active', 'completed', 'cancelled'); EXCEPTION WHEN duplicate_object THEN NULL; END $$"
     )
     op.execute(
-        "CREATE TYPE category_code AS ENUM ("
+        "DO $$ BEGIN CREATE TYPE category_code AS ENUM ("
         "'COG-01', 'COG-02', 'COG-03', 'COG-04',"
-        "'COG-05', 'COG-06', 'COG-07', 'COG-08')"
+        "'COG-05', 'COG-06', 'COG-07', 'COG-08'); EXCEPTION WHEN duplicate_object THEN NULL; END $$"
     )
     op.execute(
-        "CREATE TYPE cost_entry_status AS ENUM ('pending', 'posted', 'exception')"
+        "DO $$ BEGIN CREATE TYPE cost_entry_status AS ENUM ('pending', 'posted', 'exception'); EXCEPTION WHEN duplicate_object THEN NULL; END $$"
     )
     op.execute(
-        "CREATE TYPE vendor_status AS ENUM ('approved', 'suspended')"
+        "DO $$ BEGIN CREATE TYPE vendor_status AS ENUM ('approved', 'suspended'); EXCEPTION WHEN duplicate_object THEN NULL; END $$"
     )
 
     op.create_table(
