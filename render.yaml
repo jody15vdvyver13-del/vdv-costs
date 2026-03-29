@@ -16,15 +16,5 @@ services:
           property: connectionString
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
-        sync: false
-      - key: MANAGEMENT_WHATSAPP_NUMBERS
-        sync: false
-      - key: CFO_WHATSAPP_NUMBER
-        sync: false
       - key: TEAMS
         value: "Team A,Team B,Team C,Management"
