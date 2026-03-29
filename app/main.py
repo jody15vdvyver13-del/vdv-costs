@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from app.api import router as api_router
 from app.webhook import router as webhook_router
 from app.worker import run_worker
 
@@ -29,6 +30,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="VDV Slip Ingestion Service", lifespan=lifespan)
 app.include_router(webhook_router)
+app.include_router(api_router)
 
 
 @app.get("/health")
