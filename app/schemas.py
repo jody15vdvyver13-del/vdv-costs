@@ -106,6 +106,45 @@ class CostEntryRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── Dashboard ────────────────────────────────────────────────────────────────
+
+class CategoryBreakdown(BaseModel):
+    category_code: str
+    label: str
+    budgeted: float
+    actual: float
+    utilisation_pct: Optional[float]  # None when budgeted == 0
+
+
+class JobSummary(BaseModel):
+    id: int
+    reference: str
+    description: Optional[str]
+    contract_value: Optional[float]
+    total_cost: float
+    budget_total: float
+    margin_pct: Optional[float]  # None when contract_value is NULL
+    margin_alert: bool            # True when margin_pct < 10 %
+
+
+class DashboardJob(JobSummary):
+    categories: list[CategoryBreakdown]
+    recent_entries: list["RecentEntry"]
+
+
+class RecentEntry(BaseModel):
+    id: int
+    job_reference: str
+    supplier: str
+    amount: Optional[float]
+    category_code: Optional[str]
+    status: CostEntryStatus
+    slip_image_url: Optional[str]
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ── Approved Vendors ─────────────────────────────────────────────────────────
 
 class VendorCreate(BaseModel):
