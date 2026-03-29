@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import router as api_router
 from app.dashboard import router as dashboard_router
+from app.submit import router as submit_router
 from app.webhook import router as webhook_router
 from app.weekly_report import run_weekly_report_scheduler
 from app.worker import run_worker
@@ -42,6 +43,7 @@ app = FastAPI(title="VDV Slip Ingestion Service", lifespan=lifespan)
 app.include_router(webhook_router)
 app.include_router(api_router)
 app.include_router(dashboard_router)
+app.include_router(submit_router)
 
 if _STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")

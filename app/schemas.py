@@ -10,6 +10,7 @@ from app.db_models import CategoryCode, CostEntryStatus, JobStatus, VendorStatus
 
 class JobCreate(BaseModel):
     reference: str
+    name: Optional[str] = None
     description: Optional[str] = None
     contract_value: Optional[float] = None
     status: JobStatus = JobStatus.active
@@ -23,7 +24,15 @@ class JobCreate(BaseModel):
         return v
 
 
+class JobCreateWeb(BaseModel):
+    """Job creation from the web UI — reference is auto-generated."""
+    name: str
+    description: Optional[str] = None
+    contract_value: Optional[float] = None
+
+
 class JobUpdate(BaseModel):
+    name: Optional[str] = None
     description: Optional[str] = None
     contract_value: Optional[float] = None
     status: Optional[JobStatus] = None
@@ -32,6 +41,7 @@ class JobUpdate(BaseModel):
 class JobRead(BaseModel):
     id: int
     reference: str
+    name: Optional[str]
     description: Optional[str]
     contract_value: Optional[float]
     status: JobStatus

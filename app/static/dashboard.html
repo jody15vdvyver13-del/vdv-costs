@@ -3,38 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VDV CFO Dashboard</title>
+  <title>VDV Leadership Dashboard</title>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #1a1a1a; }
     header { background: #1b4f72; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
     header h1 { font-size: 1.25rem; font-weight: 600; }
-    .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+    nav-tabs { display: flex; gap: .5rem; padding: 1rem 2rem .5rem; border-bottom: 2px solid #e2e8f0; background: #fff; flex-wrap: wrap; }
+    .container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
     .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.1); margin-bottom: 1.5rem; overflow: hidden; }
     .card-header { padding: .75rem 1.25rem; font-weight: 600; font-size: .9rem; background: #f0f4f8; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
     table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-    th { text-align: left; padding: .6rem 1rem; background: #edf2f7; font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #4a5568; }
-    td { padding: .65rem 1rem; border-bottom: 1px solid #e8edf2; }
+    th { text-align: left; padding: .6rem 1rem; background: #edf2f7; font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: #4a5568; }
+    td { padding: .65rem 1rem; border-bottom: 1px solid #e8edf2; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr.alert-row td { background: #fff5f5; color: #c53030; }
     tr.alert-row td:first-child { border-left: 3px solid #fc8181; }
     .badge { display: inline-block; padding: .15rem .5rem; border-radius: 9999px; font-size: .75rem; font-weight: 600; }
-    .badge-posted { background: #c6f6d5; color: #276749; }
-    .badge-exception { background: #fed7d7; color: #9b2c2c; }
-    .badge-pending { background: #fefcbf; color: #744210; }
-    .btn { cursor: pointer; padding: .4rem .8rem; border: none; border-radius: 6px; font-size: .8rem; font-weight: 600; }
+    .badge-posted   { background: #c6f6d5; color: #276749; }
+    .badge-exception{ background: #fed7d7; color: #9b2c2c; }
+    .badge-pending  { background: #fefcbf; color: #744210; }
+    .badge-active   { background: #bee3f8; color: #2c5282; }
+    .badge-completed{ background: #e2e8f0; color: #4a5568; }
+    .btn { cursor: pointer; padding: .38rem .75rem; border: none; border-radius: 6px; font-size: .8rem; font-weight: 600; }
     .btn-primary { background: #1b4f72; color: #fff; }
-    .btn-back { background: #e2e8f0; color: #2d3748; }
+    .btn-success { background: #276749; color: #fff; }
+    .btn-warn    { background: #c05621; color: #fff; }
+    .btn-back    { background: #e2e8f0; color: #2d3748; }
+    .btn-sm { padding: .25rem .55rem; font-size: .75rem; }
     .progress-bar { height: 8px; border-radius: 4px; background: #e2e8f0; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 4px; background: #4299e1; }
     .progress-fill.over { background: #fc8181; }
     .loading { text-align: center; padding: 3rem; color: #718096; }
     .img-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; cursor: pointer; }
-    .margin-ok { color: #276749; font-weight: 600; }
+    .margin-ok   { color: #276749; font-weight: 600; }
     .margin-warn { color: #c53030; font-weight: 600; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* Tabs */
+    .tabs { display: flex; gap: .25rem; padding: 1rem 1.5rem .5rem; border-bottom: 2px solid #e2e8f0; background: #fff; flex-wrap: wrap; }
+    .tab-btn { padding: .5rem 1.1rem; border: none; border-radius: 6px 6px 0 0; font-size: .875rem; font-weight: 600; cursor: pointer; background: transparent; color: #718096; }
+    .tab-btn.active { background: #1b4f72; color: #fff; }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 1rem;
+    }
+    .modal {
+      background: #fff; border-radius: 10px; width: 100%; max-width: 540px;
+      max-height: 90dvh; overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,.25);
+    }
+    .modal-header { padding: 1rem 1.25rem; background: #f0f4f8; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+    .modal-body   { padding: 1.25rem; }
+    .modal-footer { padding: .85rem 1.25rem; border-top: 1px solid #e2e8f0; display: flex; gap: .5rem; justify-content: flex-end; }
+
+    /* Form fields */
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: .8rem; font-weight: 600; color: #4a5568; margin-bottom: .3rem; text-transform: uppercase; letter-spacing: .04em; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: .55rem .7rem; border: 1.5px solid #cbd5e0; border-radius: 6px; font-size: .9rem;
+    }
+    .field input:focus, .field select:focus { outline: none; border-color: #1b4f72; }
+    .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .error-msg { color: #c53030; font-size: .82rem; margin-top: .3rem; }
+    .success-msg { color: #276749; font-size: .82rem; margin-top: .3rem; }
   </style>
 </head>
 <body x-data="dashboard()" x-init="init()">
@@ -42,207 +79,217 @@
 <header>
   <div>
     <div style="font-size:.75rem; opacity:.7; margin-bottom:.1rem;">VDV Construction</div>
-    <h1>CFO Cost Dashboard</h1>
+    <h1>Leadership Dashboard</h1>
   </div>
   <div style="margin-left:auto; font-size:.8rem; opacity:.7" x-text="lastUpdated"></div>
+  <a href="/submit" target="_blank" style="margin-left:1rem; background:rgba(255,255,255,.15); color:#fff; padding:.35rem .75rem; border-radius:6px; font-size:.8rem; font-weight:600; text-decoration:none;">
+    Worker Submit →
+  </a>
 </header>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn" :class="tab==='jobs' && 'active'" @click="tab='jobs'">Jobs</button>
+  <button class="tab-btn" :class="tab==='entries' && 'active'" @click="tab='entries'">Cost Entries</button>
+</div>
 
 <div class="container">
 
-  <!-- Job list view -->
-  <template x-if="!selectedJob">
+  <!-- ── JOBS TAB ──────────────────────────────────────────────────────────── -->
+  <template x-if="tab === 'jobs'">
     <div>
-      <div class="card">
-        <div class="card-header">
-          <span>Active Jobs</span>
-          <button class="btn btn-primary" @click="refresh()">Refresh</button>
+
+      <!-- Job list (no drill-down selected) -->
+      <template x-if="!selectedJob">
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <span>Active Jobs</span>
+              <div style="display:flex;gap:.5rem">
+                <button class="btn btn-primary btn-sm" @click="openAddJob()">+ Add Job</button>
+                <button class="btn btn-back btn-sm" @click="refresh()">Refresh</button>
+              </div>
+            </div>
+            <template x-if="loading">
+              <div class="loading">Loading…</div>
+            </template>
+            <template x-if="!loading">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Reference</th>
+                    <th>Contract Value</th>
+                    <th>Actual Cost</th>
+                    <th>Budget</th>
+                    <th>Margin</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="job in jobs" :key="job.id">
+                    <tr :class="job.margin_alert ? 'alert-row' : ''">
+                      <td><strong x-text="job.name || job.description || '—'"></strong></td>
+                      <td style="font-size:.8rem;color:#718096" x-text="job.reference"></td>
+                      <td x-text="job.contract_value ? 'R' + fmt(job.contract_value) : '—'"></td>
+                      <td x-text="'R' + fmt(job.total_cost)"></td>
+                      <td>
+                        <div x-text="'R' + fmt(job.budget_total)"></div>
+                        <div class="progress-bar" style="margin-top:4px;width:100px">
+                          <div class="progress-fill"
+                               :class="job.budget_total > 0 && job.total_cost / job.budget_total > 1 ? 'over' : ''"
+                               :style="'width:' + Math.min(job.budget_total > 0 ? job.total_cost / job.budget_total * 100 : 0, 100) + '%'">
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span :class="job.margin_pct !== null && job.margin_pct < 10 ? 'margin-warn' : 'margin-ok'"
+                              x-text="job.margin_pct !== null ? job.margin_pct.toFixed(1) + '%' : '—'">
+                        </span>
+                        <span x-show="job.margin_alert"> ⚠️</span>
+                      </td>
+                      <td><span class="badge" :class="'badge-' + job.status" x-text="job.status"></span></td>
+                      <td style="white-space:nowrap">
+                        <button class="btn btn-primary btn-sm" @click="drillDown(job.id)">Detail</button>
+                        <button class="btn btn-back btn-sm" style="margin-left:.25rem" @click="openEditJob(job)">Edit</button>
+                      </td>
+                    </tr>
+                  </template>
+                  <template x-if="jobs.length === 0">
+                    <tr><td colspan="8" style="text-align:center;padding:2rem;color:#718096">No active jobs — add one above</td></tr>
+                  </template>
+                </tbody>
+              </table>
+            </template>
+          </div>
         </div>
-        <template x-if="loading">
-          <div class="loading">Loading...</div>
-        </template>
-        <template x-if="!loading">
-          <table>
-            <thead>
-              <tr>
-                <th>Job</th>
-                <th>Description</th>
-                <th>Contract Value</th>
-                <th>Actual Cost</th>
-                <th>Budget</th>
-                <th>Margin</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="job in jobs" :key="job.id">
-                <tr :class="job.margin_alert ? 'alert-row' : ''">
-                  <td><strong x-text="job.reference"></strong></td>
-                  <td x-text="job.description || '—'"></td>
-                  <td x-text="job.contract_value ? 'R' + fmt(job.contract_value) : '—'"></td>
-                  <td x-text="'R' + fmt(job.total_cost)"></td>
-                  <td>
-                    <div x-text="'R' + fmt(job.budget_total)"></div>
-                    <div class="progress-bar" style="margin-top:4px; width:100px">
-                      <div class="progress-fill"
-                           :class="job.budget_total > 0 && job.total_cost / job.budget_total > 1 ? 'over' : ''"
-                           :style="'width:' + Math.min(job.budget_total > 0 ? job.total_cost / job.budget_total * 100 : 0, 100) + '%'">
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span :class="job.margin_pct !== null && job.margin_pct < 10 ? 'margin-warn' : 'margin-ok'"
-                          x-text="job.margin_pct !== null ? job.margin_pct.toFixed(1) + '%' : '—'">
-                    </span>
-                    <span x-show="job.margin_alert"> ⚠️</span>
-                  </td>
-                  <td>
-                    <button class="btn btn-primary" @click="drillDown(job.id)">Detail</button>
-                  </td>
-                </tr>
-              </template>
-              <template x-if="jobs.length === 0">
-                <tr><td colspan="7" style="text-align:center; padding:2rem; color:#718096">No active jobs</td></tr>
-              </template>
-            </tbody>
-          </table>
-        </template>
-      </div>
+      </template>
 
-      <!-- Recent cost entries feed -->
-      <div class="card">
-        <div class="card-header">Recent Cost Entries</div>
-        <template x-if="recentLoading">
-          <div class="loading">Loading...</div>
-        </template>
-        <template x-if="!recentLoading">
-          <table>
-            <thead>
-              <tr>
-                <th>Job</th>
-                <th>Supplier</th>
-                <th>Amount</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Slip</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="e in recentEntries" :key="e.id">
-                <tr>
-                  <td x-text="e.job_reference"></td>
-                  <td x-text="e.supplier"></td>
-                  <td x-text="e.amount ? 'R' + fmt(e.amount) : '—'"></td>
-                  <td x-text="e.category_code || '—'"></td>
-                  <td><span class="badge" :class="'badge-' + e.status" x-text="e.status"></span></td>
-                  <td x-text="fmtDate(e.created_at)"></td>
-                  <td>
-                    <template x-if="e.slip_image_url">
-                      <a :href="e.slip_image_url" target="_blank">
-                        <img :src="e.slip_image_url" class="img-thumb" alt="slip" @error="$el.style.display='none'" />
-                      </a>
-                    </template>
-                    <template x-if="!e.slip_image_url"><span>—</span></template>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </template>
-      </div>
-    </div>
-  </template>
+      <!-- Job drill-down -->
+      <template x-if="selectedJob">
+        <div>
+          <div style="margin-bottom:1rem;display:flex;gap:.5rem;align-items:center">
+            <button class="btn btn-back" @click="selectedJob = null">← Back</button>
+            <button class="btn btn-primary btn-sm" @click="openEditJob(selectedJob)">Edit Job</button>
+            <button class="btn btn-success btn-sm" @click="openBudgetEditor(selectedJob)">Edit Budgets</button>
+          </div>
 
-  <!-- Job drill-down -->
-  <template x-if="selectedJob">
-    <div>
-      <div style="margin-bottom:1rem">
-        <button class="btn btn-back" @click="selectedJob = null">← Back to Jobs</button>
-      </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header" x-text="(selectedJob.name || selectedJob.reference) + ' — Summary'"></div>
+              <div style="padding:1rem;font-size:.875rem;">
+                <table style="width:auto">
+                  <tr><td style="padding:.3rem .6rem;color:#718096">Reference</td>
+                      <td style="padding:.3rem .6rem" x-text="selectedJob.reference"></td></tr>
+                  <tr><td style="padding:.3rem .6rem;color:#718096">Description</td>
+                      <td style="padding:.3rem .6rem" x-text="selectedJob.description || '—'"></td></tr>
+                  <tr><td style="padding:.3rem .6rem;color:#718096">Contract Value</td>
+                      <td style="padding:.3rem .6rem" x-text="selectedJob.contract_value ? 'R' + fmt(selectedJob.contract_value) : '—'"></td></tr>
+                  <tr><td style="padding:.3rem .6rem;color:#718096">Total Cost</td>
+                      <td style="padding:.3rem .6rem"><strong x-text="'R' + fmt(selectedJob.total_cost)"></strong></td></tr>
+                  <tr><td style="padding:.3rem .6rem;color:#718096">Budget</td>
+                      <td style="padding:.3rem .6rem" x-text="'R' + fmt(selectedJob.budget_total)"></td></tr>
+                  <tr><td style="padding:.3rem .6rem;color:#718096">Gross Margin</td>
+                      <td style="padding:.3rem .6rem">
+                        <span :class="selectedJob.margin_alert ? 'margin-warn' : 'margin-ok'"
+                              x-text="selectedJob.margin_pct !== null ? selectedJob.margin_pct.toFixed(1) + '%' : '—'">
+                        </span>
+                      </td></tr>
+                </table>
+              </div>
+            </div>
 
-      <div class="grid-2">
-        <!-- Summary card -->
-        <div class="card">
-          <div class="card-header" x-text="selectedJob.reference + ' — Summary'"></div>
-          <div style="padding:1rem; font-size:.875rem;">
-            <table style="width:auto">
-              <tr><td style="padding:.3rem .6rem; color:#718096">Description</td>
-                  <td style="padding:.3rem .6rem" x-text="selectedJob.description || '—'"></td></tr>
-              <tr><td style="padding:.3rem .6rem; color:#718096">Contract Value</td>
-                  <td style="padding:.3rem .6rem" x-text="selectedJob.contract_value ? 'R' + fmt(selectedJob.contract_value) : '—'"></td></tr>
-              <tr><td style="padding:.3rem .6rem; color:#718096">Total Cost</td>
-                  <td style="padding:.3rem .6rem"><strong x-text="'R' + fmt(selectedJob.total_cost)"></strong></td></tr>
-              <tr><td style="padding:.3rem .6rem; color:#718096">Budget</td>
-                  <td style="padding:.3rem .6rem" x-text="'R' + fmt(selectedJob.budget_total)"></td></tr>
-              <tr><td style="padding:.3rem .6rem; color:#718096">Gross Margin</td>
-                  <td style="padding:.3rem .6rem">
-                    <span :class="selectedJob.margin_alert ? 'margin-warn' : 'margin-ok'"
-                          x-text="selectedJob.margin_pct !== null ? selectedJob.margin_pct.toFixed(1) + '%' : '—'">
-                    </span>
-                  </td></tr>
+            <div class="card">
+              <div class="card-header">Cost by Category</div>
+              <table>
+                <thead>
+                  <tr><th>Category</th><th>Budgeted</th><th>Actual</th><th>Used</th></tr>
+                </thead>
+                <tbody>
+                  <template x-for="cat in selectedJob.categories.filter(c => c.budgeted > 0 || c.actual > 0)" :key="cat.category_code">
+                    <tr>
+                      <td>
+                        <div x-text="cat.label"></div>
+                        <div style="font-size:.75rem;color:#718096" x-text="cat.category_code"></div>
+                      </td>
+                      <td x-text="'R' + fmt(cat.budgeted)"></td>
+                      <td x-text="'R' + fmt(cat.actual)"></td>
+                      <td>
+                        <template x-if="cat.utilisation_pct !== null">
+                          <div>
+                            <div x-text="cat.utilisation_pct.toFixed(0) + '%'" :class="cat.utilisation_pct > 100 ? 'margin-warn' : ''"></div>
+                            <div class="progress-bar" style="margin-top:4px;width:80px">
+                              <div class="progress-fill" :class="cat.utilisation_pct > 100 ? 'over' : ''"
+                                   :style="'width:' + Math.min(cat.utilisation_pct, 100) + '%'"></div>
+                            </div>
+                          </div>
+                        </template>
+                        <template x-if="cat.utilisation_pct === null"><span>—</span></template>
+                      </td>
+                    </tr>
+                  </template>
+                  <template x-if="selectedJob.categories.filter(c => c.budgeted > 0 || c.actual > 0).length === 0">
+                    <tr><td colspan="4" style="text-align:center;padding:1rem;color:#718096">No budget set — use Edit Budgets above</td></tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header" x-text="'Cost Entries — ' + (selectedJob.name || selectedJob.reference)"></div>
+            <table>
+              <thead>
+                <tr><th>Supplier</th><th>Amount</th><th>Category</th><th>Status</th><th>Date</th><th>Slip</th></tr>
+              </thead>
+              <tbody>
+                <template x-for="e in selectedJob.recent_entries" :key="e.id">
+                  <tr>
+                    <td x-text="e.supplier"></td>
+                    <td x-text="e.amount ? 'R' + fmt(e.amount) : '—'"></td>
+                    <td x-text="e.category_code || '—'"></td>
+                    <td><span class="badge" :class="'badge-' + e.status" x-text="e.status"></span></td>
+                    <td x-text="fmtDate(e.created_at)"></td>
+                    <td>
+                      <template x-if="e.slip_image_url">
+                        <a :href="e.slip_image_url" target="_blank">
+                          <img :src="e.slip_image_url" class="img-thumb" alt="slip" @error="$el.style.display='none'" />
+                        </a>
+                      </template>
+                      <template x-if="!e.slip_image_url"><span>—</span></template>
+                    </td>
+                  </tr>
+                </template>
+                <template x-if="selectedJob.recent_entries.length === 0">
+                  <tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#718096">No entries yet</td></tr>
+                </template>
+              </tbody>
             </table>
           </div>
         </div>
+      </template>
 
-        <!-- Category breakdown -->
-        <div class="card">
-          <div class="card-header">Cost by Category</div>
-          <table>
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Budgeted</th>
-                <th>Actual</th>
-                <th>Utilisation</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="cat in selectedJob.categories.filter(c => c.budgeted > 0 || c.actual > 0)" :key="cat.category_code">
-                <tr>
-                  <td>
-                    <div x-text="cat.label"></div>
-                    <div style="font-size:.75rem;color:#718096" x-text="cat.category_code"></div>
-                  </td>
-                  <td x-text="'R' + fmt(cat.budgeted)"></td>
-                  <td x-text="'R' + fmt(cat.actual)"></td>
-                  <td>
-                    <template x-if="cat.utilisation_pct !== null">
-                      <div>
-                        <div x-text="cat.utilisation_pct.toFixed(0) + '%'" :class="cat.utilisation_pct > 100 ? 'margin-warn' : ''"></div>
-                        <div class="progress-bar" style="margin-top:4px; width:80px">
-                          <div class="progress-fill"
-                               :class="cat.utilisation_pct > 100 ? 'over' : ''"
-                               :style="'width:' + Math.min(cat.utilisation_pct, 100) + '%'">
-                          </div>
-                        </div>
-                      </div>
-                    </template>
-                    <template x-if="cat.utilisation_pct === null"><span>—</span></template>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
+    </div>
+  </template>
+
+  <!-- ── COST ENTRIES TAB ─────────────────────────────────────────────────── -->
+  <template x-if="tab === 'entries'">
+    <div class="card">
+      <div class="card-header">
+        <span>Recent Cost Entries (all jobs)</span>
+        <button class="btn btn-back btn-sm" @click="loadEntries()">Refresh</button>
       </div>
-
-      <!-- Recent entries for this job -->
-      <div class="card">
-        <div class="card-header" x-text="'Recent Entries — ' + selectedJob.reference"></div>
+      <template x-if="recentLoading"><div class="loading">Loading…</div></template>
+      <template x-if="!recentLoading">
         <table>
           <thead>
-            <tr>
-              <th>Supplier</th>
-              <th>Amount</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Slip</th>
-            </tr>
+            <tr><th>Job</th><th>Supplier</th><th>Amount</th><th>Category</th><th>Status</th><th>Submitted</th><th>Slip</th></tr>
           </thead>
           <tbody>
-            <template x-for="e in selectedJob.recent_entries" :key="e.id">
+            <template x-for="e in recentEntries" :key="e.id">
               <tr>
+                <td x-text="e.job_reference"></td>
                 <td x-text="e.supplier"></td>
                 <td x-text="e.amount ? 'R' + fmt(e.amount) : '—'"></td>
                 <td x-text="e.category_code || '—'"></td>
@@ -258,46 +305,179 @@
                 </td>
               </tr>
             </template>
-            <template x-if="selectedJob.recent_entries.length === 0">
-              <tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#718096">No entries yet</td></tr>
-            </template>
           </tbody>
         </table>
-      </div>
+      </template>
     </div>
   </template>
 
 </div>
 
+<!-- ── ADD JOB MODAL ─────────────────────────────────────────────────────── -->
+<template x-if="modal === 'add-job'">
+  <div class="modal-overlay" @click.self="modal = null">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Add New Job</span>
+        <button class="btn btn-back btn-sm" @click="modal = null">✕</button>
+      </div>
+      <div class="modal-body">
+        <div x-show="modalError" class="error-msg" style="margin-bottom:.75rem" x-text="modalError"></div>
+        <div class="field">
+          <label>Job Name *</label>
+          <input type="text" x-model="form.name" placeholder="e.g. Nedbank Office Reno" />
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <input type="text" x-model="form.description" placeholder="Optional details" />
+        </div>
+        <div class="field">
+          <label>Contract Value (R)</label>
+          <input type="number" x-model="form.contract_value" placeholder="e.g. 1500000" min="0" step="1000" />
+        </div>
+        <p style="font-size:.8rem;color:#718096;margin-top:-.5rem">A job reference (VDV-JOB-YYYY-NNN) is auto-generated.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-back" @click="modal = null">Cancel</button>
+        <button class="btn btn-primary" @click="saveJob()" :disabled="modalSaving">
+          <span x-text="modalSaving ? 'Saving…' : 'Create Job'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ── EDIT JOB MODAL ─────────────────────────────────────────────────────── -->
+<template x-if="modal === 'edit-job'">
+  <div class="modal-overlay" @click.self="modal = null">
+    <div class="modal">
+      <div class="modal-header">
+        <span x-text="'Edit — ' + (editTarget.name || editTarget.reference)"></span>
+        <button class="btn btn-back btn-sm" @click="modal = null">✕</button>
+      </div>
+      <div class="modal-body">
+        <div x-show="modalError" class="error-msg" style="margin-bottom:.75rem" x-text="modalError"></div>
+        <div class="field">
+          <label>Job Name</label>
+          <input type="text" x-model="form.name" />
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <input type="text" x-model="form.description" />
+        </div>
+        <div class="field">
+          <label>Contract Value (R)</label>
+          <input type="number" x-model="form.contract_value" min="0" step="1000" />
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select x-model="form.status">
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-back" @click="modal = null">Cancel</button>
+        <button class="btn btn-primary" @click="updateJob()" :disabled="modalSaving">
+          <span x-text="modalSaving ? 'Saving…' : 'Save Changes'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ── BUDGET EDITOR MODAL ─────────────────────────────────────────────────── -->
+<template x-if="modal === 'budgets'">
+  <div class="modal-overlay" @click.self="modal = null">
+    <div class="modal">
+      <div class="modal-header">
+        <span x-text="'Budgets — ' + (editTarget.name || editTarget.reference)"></span>
+        <button class="btn btn-back btn-sm" @click="modal = null">✕</button>
+      </div>
+      <div class="modal-body">
+        <div x-show="modalError" class="error-msg" style="margin-bottom:.75rem" x-text="modalError"></div>
+        <div x-show="budgetSaved" class="success-msg" style="margin-bottom:.75rem">✓ Budget saved</div>
+        <p style="font-size:.82rem;color:#718096;margin-bottom:1rem">Enter 0 to clear a category budget. Amounts in Rand (excl VAT).</p>
+        <div class="budget-grid">
+          <template x-for="cat in budgetForm" :key="cat.code">
+            <div class="field">
+              <label x-text="cat.code + ' — ' + cat.label"></label>
+              <input type="number" x-model="cat.amount" min="0" step="1000" placeholder="0" />
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-back" @click="modal = null">Close</button>
+        <button class="btn btn-success" @click="saveBudgets()" :disabled="modalSaving">
+          <span x-text="modalSaving ? 'Saving…' : 'Save Budgets'"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script>
+const COG_LABELS = {
+  'COG-01': 'Labour',
+  'COG-02': 'Materials',
+  'COG-03': 'Plant & Equipment',
+  'COG-04': 'Subcontractors',
+  'COG-05': 'Transport',
+  'COG-06': 'Site Costs',
+  'COG-07': 'Professional Fees',
+  'COG-08': 'Other',
+};
+
 function dashboard() {
   return {
+    tab: 'jobs',
     jobs: [],
     recentEntries: [],
     selectedJob: null,
     loading: true,
-    recentLoading: true,
+    recentLoading: false,
     lastUpdated: '',
 
+    // Modals
+    modal: null,          // 'add-job' | 'edit-job' | 'budgets' | null
+    editTarget: null,
+    form: {},
+    budgetForm: [],
+    budgetSaved: false,
+    modalSaving: false,
+    modalError: '',
+
     async init() {
-      await this.refresh();
+      await this.loadJobs();
     },
 
-    async refresh() {
+    async loadJobs() {
       this.loading = true;
-      this.recentLoading = true;
       try {
-        const [jobsRes, recentRes] = await Promise.all([
-          fetch('/dashboard/jobs'),
-          fetch('/dashboard/recent-entries?limit=50'),
-        ]);
-        this.jobs = await jobsRes.json();
-        this.recentEntries = await recentRes.json();
+        const res = await fetch('/dashboard/jobs');
+        this.jobs = await res.json();
         this.lastUpdated = 'Updated ' + new Date().toLocaleTimeString();
       } finally {
         this.loading = false;
+      }
+    },
+
+    async loadEntries() {
+      this.recentLoading = true;
+      try {
+        const res = await fetch('/dashboard/recent-entries?limit=100');
+        this.recentEntries = await res.json();
+      } finally {
         this.recentLoading = false;
       }
+    },
+
+    async refresh() {
+      await this.loadJobs();
+      if (this.tab === 'entries') await this.loadEntries();
     },
 
     async drillDown(jobId) {
@@ -305,11 +485,129 @@ function dashboard() {
       this.selectedJob = await res.json();
     },
 
+    // ── Add Job ──────────────────────────────────────────────────────────────
+    openAddJob() {
+      this.form = { name: '', description: '', contract_value: '' };
+      this.modalError = '';
+      this.modal = 'add-job';
+    },
+
+    async saveJob() {
+      if (!this.form.name.trim()) { this.modalError = 'Job name is required.'; return; }
+      this.modalSaving = true;
+      this.modalError = '';
+      try {
+        const body = {
+          name: this.form.name.trim(),
+          description: this.form.description.trim() || null,
+          contract_value: this.form.contract_value ? parseFloat(this.form.contract_value) : null,
+        };
+        const res = await fetch('/api/jobs/web', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Failed'); }
+        this.modal = null;
+        await this.loadJobs();
+      } catch (e) {
+        this.modalError = e.message;
+      } finally {
+        this.modalSaving = false;
+      }
+    },
+
+    // ── Edit Job ─────────────────────────────────────────────────────────────
+    openEditJob(job) {
+      this.editTarget = job;
+      this.form = {
+        name: job.name || '',
+        description: job.description || '',
+        contract_value: job.contract_value || '',
+        status: job.status || 'active',
+      };
+      this.modalError = '';
+      this.modal = 'edit-job';
+    },
+
+    async updateJob() {
+      this.modalSaving = true;
+      this.modalError = '';
+      try {
+        const body = {
+          name: this.form.name.trim() || null,
+          description: this.form.description.trim() || null,
+          contract_value: this.form.contract_value ? parseFloat(this.form.contract_value) : null,
+          status: this.form.status,
+        };
+        const res = await fetch(`/api/jobs/${this.editTarget.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Failed'); }
+        this.modal = null;
+        await this.loadJobs();
+        // Refresh drill-down if open
+        if (this.selectedJob && this.selectedJob.id === this.editTarget.id) {
+          await this.drillDown(this.editTarget.id);
+        }
+      } catch (e) {
+        this.modalError = e.message;
+      } finally {
+        this.modalSaving = false;
+      }
+    },
+
+    // ── Budget editor ────────────────────────────────────────────────────────
+    async openBudgetEditor(job) {
+      this.editTarget = job;
+      this.budgetSaved = false;
+      this.modalError = '';
+      // Load current budgets
+      const res = await fetch(`/api/jobs/${job.id}/budgets`);
+      const existing = await res.json();
+      const budgetMap = {};
+      existing.forEach(b => { budgetMap[b.category_code] = b.budgeted_amount; });
+      this.budgetForm = Object.entries(COG_LABELS).map(([code, label]) => ({
+        code,
+        label,
+        amount: budgetMap[code] || '',
+      }));
+      this.modal = 'budgets';
+    },
+
+    async saveBudgets() {
+      this.modalSaving = true;
+      this.modalError = '';
+      this.budgetSaved = false;
+      try {
+        for (const cat of this.budgetForm) {
+          const amount = parseFloat(cat.amount) || 0;
+          if (amount <= 0) continue; // skip zeros — no point storing 0-budget lines
+          await fetch(`/api/jobs/${this.editTarget.id}/budgets/${cat.code}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category_code: cat.code, budgeted_amount: amount }),
+          });
+        }
+        this.budgetSaved = true;
+        await this.loadJobs();
+        if (this.selectedJob && this.selectedJob.id === this.editTarget.id) {
+          await this.drillDown(this.editTarget.id);
+        }
+      } catch (e) {
+        this.modalError = e.message || 'Failed to save budgets';
+      } finally {
+        this.modalSaving = false;
+      }
+    },
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
     fmt(n) {
       if (n == null) return '—';
       return Number(n).toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     },
-
     fmtDate(iso) {
       if (!iso) return '—';
       return new Date(iso).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' });

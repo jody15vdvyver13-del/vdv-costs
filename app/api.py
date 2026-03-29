@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from datetime import datetime, timezone
+
 from app.database import get_db
-from app.db_models import ApprovedVendor, Budget, CostEntry, Job
+from app.db_models import ApprovedVendor, Budget, CategoryCode, CostEntry, Job
 from app.schemas import (
     BudgetCreate,
     BudgetRead,
@@ -13,6 +15,7 @@ from app.schemas import (
     CostEntryRead,
     CostEntryUpdate,
     JobCreate,
+    JobCreateWeb,
     JobRead,
     JobUpdate,
     VendorCreate,
@@ -47,6 +50,33 @@ async def get_job(job_id: int, db: AsyncSession = Depends(get_db)):
     job = await db.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+
+@router.post("/jobs/web", response_model=JobRead, status_code=201)
+async def register_job_web(payload: JobCreateWeb, db: AsyncSession = Depends(get_db)):
+    """Create a job from the web UI — reference is auto-generated as VDV-JOB-YYYY-NNN."""
+    year = datetime.now(timezone.utc).year
+    # Find highest sequence number for this year
+    from sqlalchemy import text
+    row = await db.scalar(
+        text(
+            "SELECT MAX(CAST(SUBSTRING(reference FROM 13) AS INTEGER)) "
+            "FROM jobs WHERE reference LIKE :prefix"
+        ).bindparams(prefix=f"VDV-JOB-{year}-%")
+    )
+    next_seq = (row or 0) + 1
+    reference = f"VDV-JOB-{year}-{next_seq:03d}"
+
+    job = Job(
+        reference=reference,
+        name=payload.name,
+        description=payload.description,
+        contract_value=payload.contract_value,
+    )
+    db.add(job)
+    await db.commit()
+    await db.refresh(job)
     return job
 
 
@@ -95,6 +125,32 @@ async def list_budgets(job_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Job not found")
     result = await db.scalars(select(Budget).where(Budget.job_id == job_id))
     return result.all()
+
+
+@router.put("/jobs/{job_id}/budgets/{category_code}", response_model=BudgetRead)
+async def upsert_budget(
+    job_id: int,
+    category_code: CategoryCode,
+    payload: BudgetCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Create or update a budget line for a category on a job."""
+    job = await db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    existing = await db.scalar(
+        select(Budget).where(Budget.job_id == job_id, Budget.category_code == category_code)
+    )
+    if existing:
+        existing.budgeted_amount = payload.budgeted_amount
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+    budget = Budget(job_id=job_id, category_code=category_code, budgeted_amount=payload.budgeted_amount)
+    db.add(budget)
+    await db.commit()
+    await db.refresh(budget)
+    return budget
 
 
 # ── Cost Entries ──────────────────────────────────────────────────────────────

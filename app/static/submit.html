@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Submit Slip — VDV</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      color: #1a1a1a;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1b4f72;
+      color: #fff;
+      padding: 1rem 1.25rem;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    header p  { font-size: .8rem; opacity: .75; margin-top: .15rem; }
+
+    .form-wrap {
+      flex: 1;
+      padding: 1.25rem;
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .field { margin-bottom: 1.1rem; }
+    label {
+      display: block;
+      font-size: .8rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: .35rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    select, input[type="file"] {
+      width: 100%;
+      padding: .65rem .75rem;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fff;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select:focus, input[type="file"]:focus {
+      outline: none;
+      border-color: #1b4f72;
+      box-shadow: 0 0 0 3px rgba(27,79,114,.15);
+    }
+
+    /* Camera / file picker */
+    .photo-area {
+      border: 2px dashed #cbd5e0;
+      border-radius: 10px;
+      background: #fff;
+      text-align: center;
+      padding: 1.5rem 1rem;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .photo-area:hover { border-color: #1b4f72; }
+    .photo-area input { display: none; }
+    .photo-area .icon { font-size: 2.5rem; margin-bottom: .5rem; }
+    .photo-area .hint { font-size: .85rem; color: #718096; }
+    .photo-area .file-name { font-size: .85rem; color: #1b4f72; font-weight: 600; margin-top: .5rem; }
+
+    .preview {
+      margin-top: .75rem;
+      border-radius: 8px;
+      overflow: hidden;
+      max-height: 220px;
+      display: flex;
+      justify-content: center;
+      background: #edf2f7;
+    }
+    .preview img { max-height: 220px; object-fit: contain; width: 100%; }
+
+    .btn-submit {
+      width: 100%;
+      padding: .9rem;
+      background: #1b4f72;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: .5rem;
+      transition: background .2s;
+    }
+    .btn-submit:hover:not(:disabled) { background: #154060; }
+    .btn-submit:disabled { opacity: .55; cursor: not-allowed; }
+
+    .alert {
+      border-radius: 8px;
+      padding: .85rem 1rem;
+      font-size: .9rem;
+      margin-bottom: 1rem;
+    }
+    .alert-success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+    .alert-error   { background: #fed7d7; color: #742a2a; border: 1px solid #fc8181; }
+
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: .4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body x-data="submitForm()" x-init="init()">
+
+<header>
+  <h1>VDV — Submit Slip</h1>
+  <p>Upload a supplier slip for a job</p>
+</header>
+
+<div class="form-wrap">
+
+  <!-- Success state -->
+  <template x-if="submitted">
+    <div>
+      <div class="alert alert-success">
+        ✓ Slip received for <strong x-text="submittedJob"></strong>. The system is processing it — no further action needed.
+      </div>
+      <button class="btn-submit" @click="reset()">Submit Another Slip</button>
+    </div>
+  </template>
+
+  <!-- Form -->
+  <template x-if="!submitted">
+    <form @submit.prevent="submit()">
+
+      <template x-if="error">
+        <div class="alert alert-error" x-text="error"></div>
+      </template>
+
+      <template x-if="loadError">
+        <div class="alert alert-error">Could not load job list. Check your connection and <a href="" style="color:inherit">refresh</a>.</div>
+      </template>
+
+      <!-- Job dropdown -->
+      <div class="field">
+        <label for="job">Job</label>
+        <select id="job" x-model="jobId" required :disabled="jobs.length === 0">
+          <option value="">— Select job —</option>
+          <template x-for="j in jobs" :key="j.id">
+            <option :value="j.id" x-text="j.label"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- Team dropdown -->
+      <div class="field">
+        <label for="team">Team</label>
+        <select id="team" x-model="teamName" required :disabled="teams.length === 0">
+          <option value="">— Select team —</option>
+          <template x-for="t in teams" :key="t">
+            <option :value="t" x-text="t"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- Photo picker -->
+      <div class="field">
+        <label>Slip Photo</label>
+        <div class="photo-area" @click="$refs.fileInput.click()">
+          <input type="file" x-ref="fileInput" accept="image/*" capture="environment"
+                 @change="onFileChange($event)" />
+          <div class="icon">📷</div>
+          <div class="hint">Tap to take a photo or choose from gallery</div>
+          <div class="file-name" x-show="fileName" x-text="fileName"></div>
+        </div>
+        <div class="preview" x-show="previewUrl" style="display:none">
+          <img :src="previewUrl" alt="slip preview" />
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit"
+              :disabled="!jobId || !teamName || !file || submitting">
+        <span x-show="submitting"><span class="spinner"></span>Submitting…</span>
+        <span x-show="!submitting">Submit Slip</span>
+      </button>
+
+    </form>
+  </template>
+
+</div>
+
+<script>
+function submitForm() {
+  return {
+    jobs: [],
+    teams: [],
+    jobId: '',
+    teamName: '',
+    file: null,
+    fileName: '',
+    previewUrl: '',
+    submitting: false,
+    submitted: false,
+    submittedJob: '',
+    error: '',
+    loadError: false,
+
+    async init() {
+      try {
+        const res = await fetch('/submit/config');
+        if (!res.ok) throw new Error('Failed to load config');
+        const data = await res.json();
+        this.jobs = data.jobs;
+        this.teams = data.teams;
+      } catch (e) {
+        this.loadError = true;
+      }
+    },
+
+    onFileChange(event) {
+      const f = event.target.files[0];
+      if (!f) return;
+      this.file = f;
+      this.fileName = f.name;
+      this.previewUrl = URL.createObjectURL(f);
+    },
+
+    async submit() {
+      this.error = '';
+      this.submitting = true;
+      try {
+        const fd = new FormData();
+        fd.append('job_id', this.jobId);
+        fd.append('team_name', this.teamName);
+        fd.append('slip', this.file);
+
+        const res = await fetch('/submit/slip', { method: 'POST', body: fd });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.detail || `Server error (${res.status})`);
+        }
+        const data = await res.json();
+        this.submittedJob = data.job_reference;
+        this.submitted = true;
+      } catch (e) {
+        this.error = e.message || 'Submission failed. Please try again.';
+      } finally {
+        this.submitting = false;
+      }
+    },
+
+    reset() {
+      this.jobId = '';
+      this.teamName = '';
+      this.file = null;
+      this.fileName = '';
+      this.previewUrl = '';
+      this.submitted = false;
+      this.submittedJob = '';
+      this.error = '';
+    },
+  };
+}
+</script>
+</body>
+</html>

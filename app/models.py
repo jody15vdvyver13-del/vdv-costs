@@ -5,11 +5,15 @@ from pydantic import BaseModel
 
 class IncomingSlip(BaseModel):
     message_sid: str
-    sender: str          # WhatsApp number e.g. whatsapp:+27821234567
-    job_reference: str   # Validated VDV-JOB-YYYY-NNN
-    media_url: str       # URL of the slip image
+    sender: str                          # WhatsApp number or "web:{team_name}"
+    job_reference: str                   # Validated VDV-JOB-YYYY-NNN
+    media_url: str                       # URL of the slip image (or empty for web uploads)
     media_content_type: str
     received_at: datetime
+    image_bytes: Optional[bytes] = None  # Set for web uploads; skips HTTP download
+    team_name: Optional[str] = None      # Team name from web form
+
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class ExtractedSlipData(BaseModel):

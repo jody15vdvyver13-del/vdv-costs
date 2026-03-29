@@ -62,6 +62,7 @@ class Job(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     reference: Mapped[str] = mapped_column(String(20), nullable=False)
+    name: Mapped[Optional[str]] = mapped_column(String(200))  # human-friendly internal name
     description: Mapped[Optional[str]] = mapped_column(String(500))
     contract_value: Mapped[Optional[float]] = mapped_column(Numeric(14, 2))
     status: Mapped[JobStatus] = mapped_column(

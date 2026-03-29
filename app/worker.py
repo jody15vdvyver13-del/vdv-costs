@@ -26,7 +26,8 @@ async def process_slip(slip: IncomingSlip) -> None:
     )
 
     # ── 1. Download and OCR ───────────────────────────────────────────────────
-    image_bytes = await download_image(slip.media_url)
+    # Web uploads carry image_bytes directly; WhatsApp slips are fetched via URL.
+    image_bytes = slip.image_bytes if slip.image_bytes else await download_image(slip.media_url)
     extracted = await extract_slip_data(
         image_bytes,
         slip.media_content_type,
@@ -53,19 +54,18 @@ async def process_slip(slip: IncomingSlip) -> None:
         job_ref = extracted.job_reference or slip.job_reference
         await send_cfo_alert(result.cost_entry, job_ref, result.exception_types)
 
-    # ── 5. Send WhatsApp confirmation ─────────────────────────────────────────
-    if result is None:
-        # Job not found or job reference invalid — no DB entry created
-        reason = "invalid_job_reference" if not extracted.job_reference else "job_not_found"
-        reply = build_error_message(extracted.job_reference or slip.job_reference, reason)
-    else:
-        reply = build_confirmation_message(
-            result.cost_entry,
-            extracted.job_reference or slip.job_reference,
-            result.exception_types,
-        )
-
-    await send_whatsapp_reply(to=slip.sender, body=reply)
+    # ── 5. Send WhatsApp confirmation (WhatsApp slips only) ───────────────────
+    if not slip.sender.startswith("web:"):
+        if result is None:
+            reason = "invalid_job_reference" if not extracted.job_reference else "job_not_found"
+            reply = build_error_message(extracted.job_reference or slip.job_reference, reason)
+        else:
+            reply = build_confirmation_message(
+                result.cost_entry,
+                extracted.job_reference or slip.job_reference,
+                result.exception_types,
+            )
+        await send_whatsapp_reply(to=slip.sender, body=reply)
 
 
 async def run_worker() -> None:
