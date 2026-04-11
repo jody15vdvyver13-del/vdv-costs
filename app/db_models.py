@@ -66,7 +66,7 @@ class Job(Base):
     description: Mapped[Optional[str]] = mapped_column(String(500))
     contract_value: Mapped[Optional[float]] = mapped_column(Numeric(14, 2))
     status: Mapped[JobStatus] = mapped_column(
-        Enum(JobStatus, name="job_status"), default=JobStatus.active, nullable=False
+        Enum(JobStatus, name="job_status", create_type=False), default=JobStatus.active, nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False
@@ -85,7 +85,7 @@ class Budget(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
     category_code: Mapped[CategoryCode] = mapped_column(
-        Enum(CategoryCode, name="category_code"), nullable=False
+        Enum(CategoryCode, name="category_code", create_type=False), nullable=False
     )
     budgeted_amount: Mapped[float] = mapped_column(Numeric(14, 2), nullable=False)
 
@@ -101,7 +101,7 @@ class ApprovedVendor(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     status: Mapped[VendorStatus] = mapped_column(
-        Enum(VendorStatus, name="vendor_status"),
+        Enum(VendorStatus, name="vendor_status", create_type=False),
         default=VendorStatus.approved,
         nullable=False,
     )
@@ -117,13 +117,13 @@ class CostEntry(Base):
     amount_excl_vat: Mapped[Optional[float]] = mapped_column(Numeric(14, 2))
     amount_incl_vat: Mapped[Optional[float]] = mapped_column(Numeric(14, 2))
     category_code: Mapped[Optional[CategoryCode]] = mapped_column(
-        Enum(CategoryCode, name="category_code"), nullable=True
+        Enum(CategoryCode, name="category_code", create_type=False), nullable=True
     )
     description: Mapped[Optional[str]] = mapped_column(String(500))
     slip_image_url: Mapped[Optional[str]] = mapped_column(String(1000))
     submitter_phone: Mapped[Optional[str]] = mapped_column(String(50))  # WhatsApp sender e.g. whatsapp:+27...
     status: Mapped[CostEntryStatus] = mapped_column(
-        Enum(CostEntryStatus, name="cost_entry_status"),
+        Enum(CostEntryStatus, name="cost_entry_status", create_type=False),
         default=CostEntryStatus.pending,
         nullable=False,
     )
